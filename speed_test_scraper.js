@@ -55,7 +55,7 @@ var ooklaTest = {
                     });
                     //watch for modals
                     self.acquireElement(".test").then(function(testAreas){
-                        self.waitForChild(testAreas[0],".modal__container",self.config.testTimeout).then(
+                        self.waitForChild(testAreas[0],".modal__container",false).then(
                             function(){
                                 reject("Modal error appeared");
                             }
@@ -101,9 +101,9 @@ var ooklaTest = {
         // console.warn("waiting for",childSelector,"in",element);
         var self = this;
         return new Promise(function(resolve,reject){
-            timeout = timeout || self.config.elementHuntTimeoutDefault;
-            // console.warn("going to watch',element,'for a',childSelector);
-
+            if (typeof timeout === "undefined") {
+                timeout = self.config.elementHuntTimeoutDefault;
+            }
             function getChild(){
                 var result = element.querySelectorAll(childSelector);
                 if(result.length > 0){
@@ -118,6 +118,13 @@ var ooklaTest = {
 
             var hasAppeared = false;
             var childObserverConfig = {childList: true};
+            if(timeout){
+                var waitTimeout = setTimeout(function(){
+                    if (!hasAppeared) {
+                        reject("timed out waiting for \"" + childSelector + "\" to appear within " + element);
+                    }
+                },timeout);
+            }
             var childObserver = new MutationObserver(function(mutations){
                 mutations.forEach(function(mutation){
                     // console.info("childList mutation");
@@ -125,17 +132,13 @@ var ooklaTest = {
                         if(getChild()){
                             hasAppeared = true;
                             childObserver.disconnect();
+                            if(timeout) clearTimeout (waitTimeout);
                             // resolve(mutation.addedNodes[0]); // this works too.
                             resolve(getChild());
                         }
                     }
                 });
             });
-            window.setTimeout(function(){
-                if (!hasAppeared) {
-                    reject("timed out waiting for \"" + childSelector + "\" to appear within " + element);
-                }
-            },timeout);
             childObserver.observe(element, childObserverConfig);
         });
     },
@@ -148,21 +151,23 @@ var ooklaTest = {
                 attributes: true,
                 attributeFilter: ["class"]
             };
+            var testTimeout = setTimeout(function(){
+                if (!hasEnded) {
+                    reject("timeed out waiting for test to run within 2 minutes",element);
+                }
+            },timeout);
             var finishObserver = new MutationObserver(function(mutations){
                 // console.warn("watching for attr mutations");
                 mutations.forEach(function(mutation){
                     if(mutation.target.classList && mutation.target.classList.contains("results-container-stage-finished")){
                         hasEnded = true;
                         finishObserver.disconnect();
+                        clearTimeout(testTimeout);
                         resolve();
                     }
                 });
             });
-            window.setTimeout(function(){
-                if (!hasEnded) {
-                    reject("timeed out waiting for test to run within 2 minutes",element);
-                }
-            },timeout);
+
             finishObserver.observe(element, finishObserverConfig);
         });
     },
@@ -250,6 +255,6 @@ var ooklaTest = {
     }
 };
 
-// ooklaTest.init();
+ooklaTest.init();
 // ooklaTest.init('ios');
 // ooklaTest.init('android');
