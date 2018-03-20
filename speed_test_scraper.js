@@ -12,29 +12,29 @@ var ooklaTest = {
         "elementHuntPollSpeed": 25,
         "reportUnits": false
     },
-    "runSpeedTest": function(){
+    "_runSpeedTest": function(){
         var self = this;
         return new Promise(function(resolve, reject) {
-            self.acquireElement(".button__wrapper button.button, .share-assembly button").then(
+            self._acquireElement(".button__wrapper button.button, .share-assembly button").then(
                 function(startButtons){
                     startButtons[0].click();
-                    self.outputStartEvent();
-                    self.acquireElement(".results-speed .result-tile-download .result-value .number").then(function(downloadResultBlocks){
-                        self.waitForChild(downloadResultBlocks[0],"span",self.config.startButtonWait).then(
+                    self._outputStartEvent();
+                    self._acquireElement(".results-speed .result-tile-download .result-value .number").then(function(downloadResultBlocks){
+                        self._waitForChild(downloadResultBlocks[0],"span",self.config.startButtonWait).then(
                             function(result){
                                 // console.log("download speed found',result);
-                                self.watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
+                                self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
                             }
                             ,function(err){
                                 reject("error while watching results!",err);
                             }
                         );
                     });
-                    self.acquireElement(".results-speed .result-tile-upload .result-value .number").then(function(uploadResultBlocks){
-                        self.waitForChild(uploadResultBlocks[0],"span",self.config.uploadStartWait).then(
+                    self._acquireElement(".results-speed .result-tile-upload .result-value .number").then(function(uploadResultBlocks){
+                        self._waitForChild(uploadResultBlocks[0],"span",self.config.uploadStartWait).then(
                             function(result){
                                 // console.log("upload speed found',result);
-                                self.watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
+                                self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
                             }
                             ,
                             function(err){
@@ -42,9 +42,9 @@ var ooklaTest = {
                             }
                         );
                     });
-                    self.acquireElement(".results-container").then(function(resultContainers){
+                    self._acquireElement(".results-container").then(function(resultContainers){
                         // console.log("watching",resultContainers,"for the finish");
-                        self.waitForFinish(resultContainers[0]).then(
+                        self._waitForFinish(resultContainers[0]).then(
                             function(){
                                 resolve("finished speed test!");
                             },
@@ -54,8 +54,8 @@ var ooklaTest = {
                         );
                     });
                     //watch for modals
-                    self.acquireElement(".test").then(function(testAreas){
-                        self.waitForChild(testAreas[0],".modal__container",false).then(
+                    self._acquireElement(".test").then(function(testAreas){
+                        self._waitForChild(testAreas[0],".modal__container",false).then(
                             function(){
                                 reject("Modal error appeared");
                             }
@@ -72,7 +72,7 @@ var ooklaTest = {
             );
         });
     },
-    "acquireElement": function(selector){
+    "_acquireElement": function(selector){
         var self = this;
         return new Promise(function(resolve, reject) {
             var huntInterval = self.config.elementHuntPollSpeed;
@@ -97,7 +97,7 @@ var ooklaTest = {
             }
         });
     },
-    "waitForChild": function(element,childSelector,timeout) {
+    "_waitForChild": function(element,childSelector,timeout) {
         // console.warn("waiting for",childSelector,"in",element);
         var self = this;
         return new Promise(function(resolve,reject){
@@ -142,7 +142,7 @@ var ooklaTest = {
             childObserver.observe(element, childObserverConfig);
         });
     },
-    "waitForFinish": function(element){
+    "_waitForFinish": function(element){
         var self = this;
         return new Promise(function(resolve,reject){
             var timeout = self.config.testTimeout;
@@ -171,7 +171,7 @@ var ooklaTest = {
             finishObserver.observe(element, finishObserverConfig);
         });
     },
-    "outputChangeObj": function(resultObj){
+    "_outputChangeObj": function(resultObj){
         if(this.platform=="andriod"){
         // TODO spit this out to Android
         }
@@ -183,7 +183,7 @@ var ooklaTest = {
             console.log(resultObj);
         }
     },
-    "outputResult": function(resultString){
+    "_outputResult": function(resultString){
         if(this.platform=="andriod"){
         // TODO spit this out to Android
         }
@@ -194,7 +194,7 @@ var ooklaTest = {
             console.log(resultString);
         }
     },
-    "outputStartEvent": function(){
+    "_outputStartEvent": function(){
         var startString = "started";
         if(this.platform=="andriod"){
         // TODO spit this out to Android
@@ -206,7 +206,7 @@ var ooklaTest = {
             console.log(startString);
         }
     },
-    "watchContentChanges": function(element,descriptor,parentElement){
+    "_watchContentChanges": function(element,descriptor,parentElement){
         // console.warn("watching for',descriptor,'speeds','in',element);
         var self = this;
         var observerConfig = {
@@ -224,37 +224,37 @@ var ooklaTest = {
                     var foundUnit = parentElement.querySelectorAll(".unit")[0];
                     resultObj.unit = foundUnit ? foundUnit.innerText : "unknown";
                 }
-                self.outputChangeObj(resultObj);
+                self._outputChangeObj(resultObj);
             });
         });
         observer.observe(element, observerConfig);
     },
-    "start": function(){
+    "_start": function(){
         var self = this;
-        this.runSpeedTest().then(function(){ // can accept a 'result' obj
-            self.outputResult("completed");
+        this._runSpeedTest().then(function(){ // can accept a 'result' obj
+            self._outputResult("completed");
         },function(){
-            self.outputResult("failed"); // can pass an error if needed
+            self._outputResult("failed"); // can pass an error if needed
         });
     },
     "init": function(platform){
         if(platform) this.platform = platform;
         if(this.platform == "ios"){ // iOs runs after page is ready, so it can run on ahead.
-            this.start();
+            this._start();
         }
         else {
             var goodReadyStates = ["complete","loaded","interactive"];
             if (document.readyState && goodReadyStates.indexOf(document.readyState) > -1) {
                 // document is already ready to go
-                this.start();
+                this._start();
             }
             else document.addEventListener("DOMContentLoaded", function() {
-                this.start();
+                this._start();
             });
         }
     }
 };
 
-ooklaTest.init();
+// ooklaTest.init();
 // ooklaTest.init('ios');
 // ooklaTest.init('android');
