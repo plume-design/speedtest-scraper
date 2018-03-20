@@ -9,7 +9,8 @@ var ooklaTest = {
         "uploadStartWait": 60000,
         "testTimeout": 120000,
         "elementHuntTimeoutDefault": 1000,
-        "elementHuntPollSpeed": 25
+        "elementHuntPollSpeed": 25,
+        "reportUnits": false
     },
     "runSpeedTest": function(){
         var self = this;
@@ -22,7 +23,7 @@ var ooklaTest = {
                         self.waitForChild(downloadResultBlocks[0],"span",self.config.startButtonWait).then(
                             function(result){
                                 // console.log("download speed found',result);
-                                self.watchContentChanges(result[0], "download",downloadResultBlocks[0].parentNode);
+                                self.watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
                             }
                             ,function(err){
                                 reject("error while watching results!",err);
@@ -33,7 +34,7 @@ var ooklaTest = {
                         self.waitForChild(uploadResultBlocks[0],"span",self.config.uploadStartWait).then(
                             function(result){
                                 // console.log("upload speed found',result);
-                                self.watchContentChanges(result[0], "upload",uploadResultBlocks[0].parentNode);
+                                self.watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
                             }
                             ,
                             function(err){
@@ -97,7 +98,7 @@ var ooklaTest = {
         });
     },
     "waitForChild": function(element,childSelector,timeout) {
-        console.warn("waiting for",childSelector,"in",element);
+        // console.warn("waiting for",childSelector,"in",element);
         var self = this;
         return new Promise(function(resolve,reject){
             timeout = timeout || self.config.elementHuntTimeoutDefault;
@@ -170,7 +171,7 @@ var ooklaTest = {
         // TODO spit this out to Android
         }
         else if(this.platform=="ios"){
-            console.warn("ios!!!");
+            // console.warn("ios!!!");
             window.webkit.messageHandlers.speedHandler.postMessage(resultObj);
         }
         else{
@@ -209,13 +210,15 @@ var ooklaTest = {
         };
         var observer = new MutationObserver(function(mutations){
             mutations.forEach(function(mutation){
-                // console.warn("parentElement",parentElement);
-                // var foundUnit = parentElement.querySelectorAll(".unit")[0];
                 var resultObj = {
                     "test": descriptor,
                     "value": parseFloat(mutation.target.data)
-                    // ,"unit": foundUnit ? foundUnit.innerText : "unknown"
                 };
+                if(self.config.reportUnits){
+                    // console.warn("parentElement",parentElement);
+                    var foundUnit = parentElement.querySelectorAll(".unit")[0];
+                    resultObj.unit = foundUnit ? foundUnit.innerText : "unknown";
+                }
                 self.outputChangeObj(resultObj);
             });
         });
