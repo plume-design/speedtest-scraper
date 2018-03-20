@@ -227,7 +227,7 @@ var ooklaTest = {
     "start": function(){
         var self = this;
         this.runSpeedTest().then(function(){ // can accept a 'result' obj
-            self.outputResult("succeeded");
+            self.outputResult("completed");
         },function(){
             self.outputResult("failed"); // can pass an error if needed
         });
