@@ -231,9 +231,9 @@ var ooklaTest = {
     },
     "init": function(platform){
         if(platform) this.platform = platform;
-        // if(this.platform == "ios"){
-        //     this.start();
-        // }
+        if(this.platform == "ios"){ // iOs runs after page is ready, so it can run on ahead.
+            this.start();
+        }
         else {
             var goodReadyStates = ["complete","loaded","interactive"];
             if (document.readyState && goodReadyStates.indexOf(document.readyState) > -1) {
