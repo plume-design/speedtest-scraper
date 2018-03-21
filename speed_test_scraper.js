@@ -125,13 +125,13 @@ var ooklaTest = {
                     }
                 },timeout);
             }
-            var childObserver = new MutationObserver(function(mutations){
+            self.childObserver = new MutationObserver(function(mutations){
                 mutations.forEach(function(mutation){
                     // console.info("childList mutation");
                     if (mutation.type == "childList") {
                         if(getChild()){
                             hasAppeared = true;
-                            childObserver.disconnect();
+                            self.childObserver.disconnect();
                             if(timeout) clearTimeout (waitTimeout);
                             // resolve(mutation.addedNodes[0]); // this works too.
                             resolve(getChild());
@@ -139,7 +139,7 @@ var ooklaTest = {
                     }
                 });
             });
-            childObserver.observe(element, childObserverConfig);
+            self.childObserver.observe(element, childObserverConfig);
         });
     },
     "_waitForFinish": function(element){
@@ -156,19 +156,19 @@ var ooklaTest = {
                     reject("timeed out waiting for test to run within 2 minutes",element);
                 }
             },timeout);
-            var finishObserver = new MutationObserver(function(mutations){
+            self.finishObserver = new MutationObserver(function(mutations){
                 // console.warn("watching for attr mutations");
                 mutations.forEach(function(mutation){
                     if(mutation.target.classList && mutation.target.classList.contains("results-container-stage-finished")){
                         hasEnded = true;
-                        finishObserver.disconnect();
+                        self.finishObserver.disconnect();
                         clearTimeout(testTimeout);
                         resolve();
                     }
                 });
             });
 
-            finishObserver.observe(element, finishObserverConfig);
+            self.finishObserver.observe(element, finishObserverConfig);
         });
     },
     "_outputChangeObj": function(resultObj){
@@ -193,6 +193,7 @@ var ooklaTest = {
         else{
             console.log(resultString);
         }
+        this._disconnectObservers();
     },
     "_outputStartEvent": function(){
         var startString = "started";
@@ -213,7 +214,7 @@ var ooklaTest = {
             characterData: true,
             subtree: true
         };
-        var observer = new MutationObserver(function(mutations){
+        self.changeObserver = new MutationObserver(function(mutations){
             mutations.forEach(function(mutation){
                 var resultObj = {
                     "test": descriptor,
@@ -227,7 +228,13 @@ var ooklaTest = {
                 self._outputChangeObj(resultObj);
             });
         });
-        observer.observe(element, observerConfig);
+        self.changeObserver.observe(element, observerConfig);
+    },
+    "_disconnectObservers": function(){
+        var self = this;
+        ["changeObserver","finishObserver","childObserver"].forEach(function(observer){
+            self[observer] && self[observer].disconnect();
+        });
     },
     "_start": function(){
         var self = this;
