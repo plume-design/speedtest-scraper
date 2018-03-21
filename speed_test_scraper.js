@@ -3,7 +3,7 @@
 // FURTHER READING
 // https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver#MutationObserverInit
 
-var ooklaTest = {
+var ooklaTest = { // eslint-disable-line no-unused-vars
     "config":{
         "startButtonWait": 5000,
         "uploadStartWait": 60000,
@@ -180,7 +180,7 @@ var ooklaTest = {
             window.webkit.messageHandlers.speedHandler.postMessage(resultObj);
         }
         else{
-            console.log(resultObj);
+            console.log(resultObj); // eslint-disable-line no-console
         }
     },
     "_outputResult": function(resultString){
@@ -191,7 +191,7 @@ var ooklaTest = {
             window.webkit.messageHandlers.resultHandler.postMessage(resultString);
         }
         else{
-            console.log(resultString);
+            console.log(resultString); // eslint-disable-line no-console
         }
         this._disconnectObservers();
     },
@@ -204,7 +204,7 @@ var ooklaTest = {
             window.webkit.messageHandlers.startHandler.postMessage(startString);
         }
         else{
-            console.log(startString);
+            console.log(startString); // eslint-disable-line no-console
         }
     },
     "_watchContentChanges": function(element,descriptor,parentElement){
