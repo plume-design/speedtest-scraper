@@ -18,7 +18,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             self._acquireElement(".button__wrapper button.button, .share-assembly button").then(
                 function(startButtons){
                     startButtons[0].click();
-                    self._outputStartEvent();
+                    self._printStatus("startHandler","started");
+                    self._printStatus("statusHandler","Start button found and clicked");
+
                     self._acquireElement(".results-speed .result-tile-download .result-value .number").then(function(downloadResultBlocks){
                         self._waitForChild(downloadResultBlocks[0],"span",self.config.firstDownloadStatTimeout).then(
                             function(result){
@@ -26,7 +28,8 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                                 self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
                             }
                             ,function(err){
-                                reject("error while watching results!",err);
+                                self._printStatus("statusHandler","error while waiting for download results span");
+                                reject(err);
                             }
                         );
                     });
@@ -38,7 +41,8 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                             }
                             ,
                             function(err){
-                                reject("error while watching results!",err);
+                                self._printStatus("statusHandler","error while waiting for upload results span");
+                                reject(err);
                             }
                         );
                     });
@@ -46,17 +50,20 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                         // console.log("watching",resultContainers,"for the finish");
                         self._waitForFinish(resultContainers[0]).then(
                             function(){
+                                self._printStatus("statusHandler","finished speed test!");
                                 resolve("finished speed test!");
                             },
                             function(){
-                                reject("speed test failed!");
+                                self._printStatus("statusHandler","speed test failed!");
+                                reject("speed test failed (timeout)!");
                             }
                         );
                     });
                     //watch for modals
                     self._acquireElement(".test").then(function(testAreas){
-                        self._waitForChild(testAreas[0],".modal__container",false).then(
+                        self._waitForChild(testAreas[0],".modal__container",false,true).then(
                             function(){
+                                self._printStatus("statusHandler","Modal error appeared");
                                 reject("Modal error appeared");
                             }
                             // ,function(err){
@@ -67,6 +74,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                 }
                 ,
                 function(err){
+                    self._printStatus("statusHandler","finished speed test!");
                     reject("error finding the start button",err);
                 }
             );
@@ -97,9 +105,15 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             }
         });
     },
-    "_waitForChild": function(element,childSelector,timeout) {
-        // console.warn("waiting for",childSelector,"in",element);
+    "_waitForChild": function(element,childSelector,timeout,watchForDescendents) {
         var self = this;
+
+        self.childObservers = self.childObservers || [];
+        var newObserverIndex = self.childObservers.length;
+
+        var statusString = "Waiting for " + childSelector + " in (" + element.classList + ") with timeout of " + timeout + (watchForDescendents ? "(Observer index: " + newObserverIndex + ").  Watching descendendents." : ".");
+        self._printStatus("statusHandler",statusString);
+
         return new Promise(function(resolve,reject){
             if (typeof timeout === "undefined") {
                 timeout = self.config.elementHuntTimeoutDefault;
@@ -107,39 +121,51 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             function getChild(){
                 var result = element.querySelectorAll(childSelector);
                 if(result.length > 0){
+                    var successString = "Found \"" + childSelector + "\" within (" + element.classList + ") (oberver index " + newObserverIndex + ")";
+                    self._printStatus("statusHandler",successString);
                     return result;
                 }
                 else return false;
             }
 
-            if(getChild()){
-                resolve(getChild());
+            var foundChild = getChild();
+            if(foundChild){
+                self._printStatus("statusHandler","Found element " + childSelector + " right away");
+                resolve(foundChild);
             }
 
             var hasAppeared = false;
-            var childObserverConfig = {childList: true};
+            var childObserverConfig = {
+                subtree: watchForDescendents ? true : false,
+                childList: true
+            };
+
+            var failureString = "Timed out waiting for \"" + childSelector + "\" to appear within (" + element.classList + ")";
             if(timeout){
                 var waitTimeout = setTimeout(function(){
                     if (!hasAppeared) {
-                        reject("timed out waiting for \"" + childSelector + "\" to appear within " + element);
+                        self._printStatus("statusHandler",failureString);
+                        reject(failureString);
                     }
                 },timeout);
             }
-            self.childObserver = new MutationObserver(function(mutations){
+
+            self.childObservers.push(new MutationObserver(function(mutations){
                 mutations.forEach(function(mutation){
-                    // console.info("childList mutation");
                     if (mutation.type == "childList") {
-                        if(getChild()){
+                        self._printStatus("statusHandler","childList mutation observed, hunting for "+childSelector);
+                        var observedChild = getChild();
+                        if(observedChild){
                             hasAppeared = true;
-                            self.childObserver.disconnect();
+                            self.childObservers[newObserverIndex].disconnect(); //it hasn't been added to the list yet, but that's where it WILL be
                             if(timeout) clearTimeout (waitTimeout);
                             // resolve(mutation.addedNodes[0]); // this works too.
-                            resolve(getChild());
+                            resolve(observedChild);
                         }
                     }
                 });
-            });
-            self.childObserver.observe(element, childObserverConfig);
+            }));
+            self.childObservers[newObserverIndex].observe(element, childObserverConfig);
         });
     },
     "_waitForFinish": function(element){
@@ -153,7 +179,8 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             };
             var testTimeout = setTimeout(function(){
                 if (!hasEnded) {
-                    reject("timeed out waiting for test to run within 2 minutes",element);
+                    self._printStatus("statusHandler","Timed out waiting for test to run within 2 minutes");
+                    reject(element);
                 }
             },timeout);
             self.finishObserver = new MutationObserver(function(mutations){
@@ -171,43 +198,35 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             self.finishObserver.observe(element, finishObserverConfig);
         });
     },
-    "_outputChangeObj": function(resultObj){
+    "_printStatus": function(handler,messageContent){
+        //Handlers:
+        // statusHandler - just fire off random status notes.
         if(this.platform=="andriod"){
         // TODO spit this out to Android
         }
         else if(this.platform=="ios"){
-            // console.warn("ios!!!");
-            window.webkit.messageHandlers.speedHandler.postMessage(resultObj);
+            // console.warn("ios!!!");a
+            window.webkit.messageHandlers[handler].postMessage(messageContent);
         }
         else{
-            console.log(resultObj); // eslint-disable-line no-console
+            var outputHandler = (handler === "statusHandler") ? console.debug : console.log; // eslint-disable-line no-console
+            outputHandler(handler,messageContent);
         }
     },
-    "_outputResult": function(resultString){
+    "_outputStatus": function(resultString){
         if(this.platform=="andriod"){
-        // TODO spit this out to Android
+        // TODO spit this out to Androida
         }
         else if(this.platform=="ios"){
-            window.webkit.messageHandlers.resultHandler.postMessage(resultString);
+            window.webkit.messageHandlers.statusHandler.postMessage(resultString);
         }
         else{
             console.log(resultString); // eslint-disable-line no-console
         }
         this._disconnectObservers();
     },
-    "_outputStartEvent": function(){
-        var startString = "started";
-        if(this.platform=="andriod"){
-        // TODO spit this out to Android
-        }
-        else if(this.platform=="ios"){
-            window.webkit.messageHandlers.startHandler.postMessage(startString);
-        }
-        else{
-            console.log(startString); // eslint-disable-line no-console
-        }
-    },
     "_watchContentChanges": function(element,descriptor,parentElement){
+        this._printStatus("watching for " + descriptor + " speeds in (" + element + ")");
         // console.warn("watching for',descriptor,'speeds','in',element);
         var self = this;
         var observerConfig = {
@@ -225,23 +244,27 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                     var foundUnit = parentElement.querySelectorAll(".unit")[0];
                     resultObj.unit = foundUnit ? foundUnit.innerText : "unknown";
                 }
-                self._outputChangeObj(resultObj);
+                self._printStatus("speedHandler",resultObj);
             });
         });
         self.changeObserver.observe(element, observerConfig);
     },
     "_disconnectObservers": function(){
         var self = this;
-        ["changeObserver","finishObserver","childObserver"].forEach(function(observer){
+        ["changeObserver","finishObserver"].forEach(function(observer){
             self[observer] && self[observer].disconnect();
+        });
+        //there may be multiple childObservers, so loop!
+        self.childObservers.forEach(function(childObserver){
+            childObserver.disconnect();
         });
     },
     "_start": function(){
         var self = this;
         this._runSpeedTest().then(function(){ // can accept a 'result' obj
-            self._outputResult("completed");
+            self._printStatus("resultHandler","completed");
         },function(){
-            self._outputResult("failed"); // can pass an error if needed
+            self._printStatus("resultHandler","failed"); // can pass an error if needed
         });
     },
     "init": function(platform){
@@ -262,6 +285,6 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
     }
 };
 
-// ooklaTest.init();
+ooklaTest.init();
 // ooklaTest.init('ios');
 // ooklaTest.init('android');
