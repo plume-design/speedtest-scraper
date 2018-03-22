@@ -5,11 +5,11 @@
 
 var ooklaTest = { // eslint-disable-line no-unused-vars
     "config":{
-        "startButtonWait": 5000,
-        "uploadStartWait": 60000,
+        "firstDownloadStatTimeout": 10000,
+        "firstUploadStatTimeout": 60000,
         "testTimeout": 120000,
-        "elementHuntTimeoutDefault": 1000,
-        "elementHuntPollSpeed": 25,
+        "elementHuntTimeoutDefault": 3000,
+        "elementHuntPollSpeed": 100,
         "reportUnits": false
     },
     "_runSpeedTest": function(){
@@ -20,7 +20,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                     startButtons[0].click();
                     self._outputStartEvent();
                     self._acquireElement(".results-speed .result-tile-download .result-value .number").then(function(downloadResultBlocks){
-                        self._waitForChild(downloadResultBlocks[0],"span",self.config.startButtonWait).then(
+                        self._waitForChild(downloadResultBlocks[0],"span",self.config.firstDownloadStatTimeout).then(
                             function(result){
                                 // console.log("download speed found',result);
                                 self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
@@ -31,7 +31,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                         );
                     });
                     self._acquireElement(".results-speed .result-tile-upload .result-value .number").then(function(uploadResultBlocks){
-                        self._waitForChild(uploadResultBlocks[0],"span",self.config.uploadStartWait).then(
+                        self._waitForChild(uploadResultBlocks[0],"span",self.config.firstUploadStatTimeout).then(
                             function(result){
                                 // console.log("upload speed found',result);
                                 self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
