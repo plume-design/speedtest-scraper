@@ -18,17 +18,17 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             self._acquireElement(".button__wrapper button.button, .share-assembly button").then(
                 function(startButtons){
                     startButtons[0].click();
-                    self._printStatus("startHandler","started");
-                    self._printStatus("statusHandler","Start button found and clicked");
+                    self._output("startHandler","started");
+                    self._output("statusHandler","Start button found and clicked");
 
                     self._acquireElement(".results-speed .result-tile-download .result-value .number").then(function(downloadResultBlocks){
                         self._waitForChild(downloadResultBlocks[0],"span",self.config.firstDownloadStatTimeout).then(
                             function(result){
-                                // console.log("download speed found',result);
+                                self._outputSingleStat(result[0].innerText,downloadResultBlocks[0],"download");
                                 self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
                             }
                             ,function(err){
-                                self._printStatus("statusHandler","error while waiting for download results span");
+                                self._output("statusHandler","error while waiting for download results span");
                                 reject(err);
                             }
                         );
@@ -36,12 +36,12 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                     self._acquireElement(".results-speed .result-tile-upload .result-value .number").then(function(uploadResultBlocks){
                         self._waitForChild(uploadResultBlocks[0],"span",self.config.firstUploadStatTimeout).then(
                             function(result){
-                                // console.log("upload speed found',result);
+                                self._outputSingleStat(result[0].innerText,uploadResultBlocks[0],"upload");
                                 self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
                             }
                             ,
                             function(err){
-                                self._printStatus("statusHandler","error while waiting for upload results span");
+                                self._output("statusHandler","error while waiting for upload results span");
                                 reject(err);
                             }
                         );
@@ -50,11 +50,11 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                         // console.log("watching",resultContainers,"for the finish");
                         self._waitForFinish(resultContainers[0]).then(
                             function(){
-                                self._printStatus("statusHandler","finished speed test!");
+                                self._output("statusHandler","finished speed test!");
                                 resolve("finished speed test!");
                             },
                             function(){
-                                self._printStatus("statusHandler","speed test failed!");
+                                self._output("statusHandler","speed test failed!");
                                 reject("speed test failed (timeout)!");
                             }
                         );
@@ -63,7 +63,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                     self._acquireElement(".test").then(function(testAreas){
                         self._waitForChild(testAreas[0],".modal__container",false,true).then(
                             function(){
-                                self._printStatus("statusHandler","Modal error appeared");
+                                self._output("statusHandler","Modal error appeared");
                                 reject("Modal error appeared");
                             }
                             // ,function(err){
@@ -74,11 +74,23 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                 }
                 ,
                 function(err){
-                    self._printStatus("statusHandler","finished speed test!");
+                    self._output("statusHandler","finished speed test!");
                     reject("error finding the start button",err);
                 }
             );
         });
+    },
+    "_outputSingleStat":function(value,parentElement,statName){
+        var resultObj = {
+            "test": statName,
+            "value": parseFloat(value)
+        };
+        if(this.config.reportUnits){
+            // console.warn("parentElement",parentElement);
+            var foundUnit = parentElement.querySelectorAll(".unit")[0];
+            resultObj.unit = foundUnit ? foundUnit.innerText : "unknown";
+        }
+        this._output("speedHandler",resultObj);
     },
     "_acquireElement": function(selector){
         var self = this;
@@ -112,7 +124,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         var newObserverIndex = self.childObservers.length;
 
         var statusString = "Waiting for " + childSelector + " in (" + element.classList + ") with timeout of " + timeout + (watchForDescendents ? "(Observer index: " + newObserverIndex + ").  Watching descendendents." : ".");
-        self._printStatus("statusHandler",statusString);
+        self._output("statusHandler",statusString);
 
         return new Promise(function(resolve,reject){
             if (typeof timeout === "undefined") {
@@ -122,7 +134,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                 var result = element.querySelectorAll(childSelector);
                 if(result.length > 0){
                     var successString = "Found \"" + childSelector + "\" within (" + element.classList + ") (oberver index " + newObserverIndex + ")";
-                    self._printStatus("statusHandler",successString);
+                    self._output("statusHandler",successString);
                     return result;
                 }
                 else return false;
@@ -130,7 +142,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
 
             var foundChild = getChild();
             if(foundChild){
-                self._printStatus("statusHandler","Found element " + childSelector + " right away");
+                self._output("statusHandler","Found element " + childSelector + " right away");
                 resolve(foundChild);
             }
 
@@ -144,7 +156,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             if(timeout){
                 var waitTimeout = setTimeout(function(){
                     if (!hasAppeared) {
-                        self._printStatus("statusHandler",failureString);
+                        self._output("statusHandler",failureString);
                         reject(failureString);
                     }
                 },timeout);
@@ -153,7 +165,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             self.childObservers.push(new MutationObserver(function(mutations){
                 mutations.forEach(function(mutation){
                     if (mutation.type == "childList") {
-                        self._printStatus("statusHandler","childList mutation observed, hunting for "+childSelector);
+                        self._output("statusHandler","childList mutation observed, hunting for "+childSelector);
                         var observedChild = getChild();
                         if(observedChild){
                             hasAppeared = true;
@@ -179,7 +191,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             };
             var testTimeout = setTimeout(function(){
                 if (!hasEnded) {
-                    self._printStatus("statusHandler","Timed out waiting for test to run within 2 minutes");
+                    self._output("statusHandler","Timed out waiting for test to run within 2 minutes");
                     reject(element);
                 }
             },timeout);
@@ -198,11 +210,11 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             self.finishObserver.observe(element, finishObserverConfig);
         });
     },
-    "_printStatus": function(handler,messageContent){
+    "_output": function(handler,messageContent){
         //Handlers:
         // statusHandler - just fire off random status notes.
         if(this.platform=="andriod"){
-        // TODO spit this out to Android
+            // TODO spit this out to Android
         }
         else if(this.platform=="ios"){
             // console.warn("ios!!!");a
@@ -215,7 +227,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
     },
     "_outputStatus": function(resultString){
         if(this.platform=="andriod"){
-        // TODO spit this out to Androida
+            // TODO spit this out to Androida
         }
         else if(this.platform=="ios"){
             window.webkit.messageHandlers.statusHandler.postMessage(resultString);
@@ -226,7 +238,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         this._disconnectObservers();
     },
     "_watchContentChanges": function(element,descriptor,parentElement){
-        this._printStatus("watching for " + descriptor + " speeds in (" + element + ")");
+        this._output("watching for " + descriptor + " speeds in (" + element + ")");
         // console.warn("watching for',descriptor,'speeds','in',element);
         var self = this;
         var observerConfig = {
@@ -235,16 +247,8 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         };
         self.changeObserver = new MutationObserver(function(mutations){
             mutations.forEach(function(mutation){
-                var resultObj = {
-                    "test": descriptor,
-                    "value": parseFloat(mutation.target.data)
-                };
-                if(self.config.reportUnits){
-                    // console.warn("parentElement",parentElement);
-                    var foundUnit = parentElement.querySelectorAll(".unit")[0];
-                    resultObj.unit = foundUnit ? foundUnit.innerText : "unknown";
-                }
-                self._printStatus("speedHandler",resultObj);
+                self._outputSingleStat(mutation.target.data,parentElement,descriptor);
+
             });
         });
         self.changeObserver.observe(element, observerConfig);
@@ -262,9 +266,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
     "_start": function(){
         var self = this;
         this._runSpeedTest().then(function(){ // can accept a 'result' obj
-            self._printStatus("resultHandler","completed");
+            self._output("resultHandler","completed");
         },function(){
-            self._printStatus("resultHandler","failed"); // can pass an error if needed
+            self._output("resultHandler","failed"); // can pass an error if needed
         });
     },
     "init": function(platform){
