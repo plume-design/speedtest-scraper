@@ -26,6 +26,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                             function(result){
                                 self._outputSingleStat(result[0].innerText,downloadResultBlocks[0],"download");
                                 self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
+                                self._output("statusHandler","Download stat watcher started");
                             }
                             ,function(err){
                                 self._output("statusHandler","error while waiting for download results span");
@@ -38,6 +39,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                             function(result){
                                 self._outputSingleStat(result[0].innerText,uploadResultBlocks[0],"upload");
                                 self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
+                                self._output("statusHandler","Upload stat watcher started");
                             }
                             ,
                             function(err){
@@ -87,8 +89,11 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         };
         if(this.config.reportUnits){
             // console.warn("parentElement",parentElement);
-            var foundUnit = parentElement.querySelectorAll(".unit")[0];
-            resultObj.unit = foundUnit ? foundUnit.innerText : "unknown";
+            var foundUnit = parentElement.querySelectorAll(".unit");
+            if(foundUnit.length > 0){
+                resultObj.unit = foundUnit[0].innerText;
+            }
+
         }
         this._output("speedHandler",resultObj);
     },
@@ -108,11 +113,14 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                 var huntResult = document.querySelectorAll(selector);
                 if(huntResult.length > 0){
                     clearInterval(huntLoop);
+                    self._output("statusHandler",selector + "acquired");
                     resolve(huntResult);
                 }
                 else if(huntLoopsRun > (huntTimeout/huntInterval)){
                     clearInterval(huntLoop);
-                    reject("Couldn't find the element \"" + selector + "\" within " + huntTimeout + "ms");
+                    var statusString = "Couldn't find the element \"" + selector + "\" within " + huntTimeout + "ms";
+                    self._output("statusHandler",statusString);
+                    reject(statusString);
                 }
             }
         });
@@ -248,7 +256,6 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         self.changeObserver = new MutationObserver(function(mutations){
             mutations.forEach(function(mutation){
                 self._outputSingleStat(mutation.target.data,parentElement,descriptor);
-
             });
         });
         self.changeObserver.observe(element, observerConfig);
@@ -289,6 +296,6 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
     }
 };
 
-ooklaTest.init();
+// ooklaTest.init();
 // ooklaTest.init('ios');
 // ooklaTest.init('android');
