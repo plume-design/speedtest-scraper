@@ -289,6 +289,6 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
     }
 };
 
-ooklaTest.init();
+// ooklaTest.init();
 // ooklaTest.init('ios');
 // ooklaTest.init('android');
