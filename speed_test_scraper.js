@@ -1,4 +1,4 @@
-/* global Promise */
+/* global Promise  */
 
 // FURTHER READING
 // https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver#MutationObserverInit
@@ -24,9 +24,23 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                     self._acquireElement(".results-speed .result-tile-download .result-value .number").then(function(downloadResultBlocks){
                         self._waitForChild(downloadResultBlocks[0],"span",self.config.firstDownloadStatTimeout).then(
                             function(result){
-                                self._outputSingleStat(result[0].innerText,downloadResultBlocks[0],"download");
-                                self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
-                                self._output("statusHandler","Download stat watcher started");
+                                // self._outputSingleStat(result[0].innerText,downloadResultBlocks[0],"download");
+                                self._output("statusHandler","Download stat watcher starting!!!");
+                                // self._watchContentChanges(result[0], "download", self.config.reportUnits ? downloadResultBlocks[0].parentNode : null);
+
+                                var observerConfig = {
+                                    characterData: true,
+                                    subtree: true
+                                };
+                                self.changeObserver = new MutationObserver(function(mutations){
+                                    mutations.forEach(function(mutation){
+                                        self._outputSingleStat(mutation.target.data,self.config.reportUnits ? downloadResultBlocks[0].parentNode : null,"download");
+                                    });
+                                });
+                                self.changeObserver.observe(result[0], observerConfig);
+
+
+                                self._output("statusHandler","Download stat watcher started!!!");
                             }
                             ,function(err){
                                 self._output("statusHandler","error while waiting for download results span");
@@ -37,9 +51,23 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                     self._acquireElement(".results-speed .result-tile-upload .result-value .number").then(function(uploadResultBlocks){
                         self._waitForChild(uploadResultBlocks[0],"span",self.config.firstUploadStatTimeout).then(
                             function(result){
-                                self._outputSingleStat(result[0].innerText,uploadResultBlocks[0],"upload");
-                                self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
-                                self._output("statusHandler","Upload stat watcher started");
+                                // self._outputSingleStat(result[0].innerText,uploadResultBlocks[0],"upload");
+                                self._output("statusHandler","Upload stat watcher started!!!");
+                                // self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
+
+                                var observerConfig = {
+                                    characterData: true,
+                                    subtree: true
+                                };
+                                self.changeObserver = new MutationObserver(function(mutations){
+                                    mutations.forEach(function(mutation){
+                                        self._outputSingleStat(mutation.target.data,self.config.reportUnits ? uploadResultBlocks[0].parentNode : null,"upload");
+                                    });
+                                });
+                                self.changeObserver.observe(result[0], observerConfig);
+
+
+                                self._output("statusHandler","Upload stat watcher started!!!");
                             }
                             ,
                             function(err){
@@ -245,21 +273,23 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         }
         this._disconnectObservers();
     },
-    "_watchContentChanges": function(element,descriptor,parentElement){
-        this._output("watching for " + descriptor + " speeds in (" + element + ")");
-        // console.warn("watching for',descriptor,'speeds','in',element);
-        var self = this;
-        var observerConfig = {
-            characterData: true,
-            subtree: true
-        };
-        self.changeObserver = new MutationObserver(function(mutations){
-            mutations.forEach(function(mutation){
-                self._outputSingleStat(mutation.target.data,parentElement,descriptor);
-            });
-        });
-        self.changeObserver.observe(element, observerConfig);
-    },
+    // "_watchContentChanges": function(element,descriptor,parentElement){
+    //     // console.warn("watching for',descriptor,'speeds','in',element);
+    //     var self = this;
+    //
+    //     self._output("watching for " + descriptor + " speeds in (" + element + ")");
+    //
+    //     var observerConfig = {
+    //         characterData: true,
+    //         subtree: true
+    //     };
+    //     self.changeObserver = new MutationObserver(function(mutations){
+    //         mutations.forEach(function(mutation){
+    //             self._outputSingleStat(mutation.target.data,parentElement,descriptor);
+    //         });
+    //     });
+    //     self.changeObserver.observe(element, observerConfig);
+    // },
     "_disconnectObservers": function(){
         var self = this;
         ["changeObserver","finishObserver"].forEach(function(observer){
