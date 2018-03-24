@@ -1,5 +1,13 @@
 /* global Promise  */
 
+// TO LINT:
+// npm install eslint -g
+// eslint speed_test_scraper.js
+
+// TO MINIFY/UFLIGY:
+// npm install uglify-js -g
+// uglifyjs speed_test_scraper.js -c -m -o speed_test_scraper.min.js
+
 // FURTHER READING
 // https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver#MutationObserverInit
 
