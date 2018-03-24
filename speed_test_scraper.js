@@ -76,6 +76,40 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                             }
                         );
                     });
+                    self._acquireElement(".results-speed .result-tile").then(function(testAreas){
+                        self._output("statusHandler","Watching for upload area highlight (a.k.a. download complete)");
+                        // self._watchContentChanges(result[0], "upload", self.config.reportUnits ? uploadResultBlocks[0].parentNode : null);
+
+                        var observerConfig = {
+                            attributes: true,
+                            attributeFilter: ["class"],
+                            attributeOldValue: true
+                        };
+
+                        // result-active-test : added = started, removed = complete.
+
+                        self.activationObserver = new MutationObserver(function(mutations){
+                            // var hasStarted = false;
+                            function determineTest(classList){
+                                return classList.contains("result-tile-download") ? "download" : classList.contains("result-tile-upload") ? "upload" : "unknown";
+                            }
+                            mutations.forEach(function(mutation){
+                                var oldClasses = mutation.oldValue.split(" ");
+                                if(oldClasses.includes("result-active-test") && !mutation.target.classList.contains("result-active-test")){
+                                    self._output("startHandler",determineTest(mutation.target.classList) + "Finished");
+                                }
+                                else if(!oldClasses.includes("result-active-test") && mutation.target.classList.contains("result-active-test")){
+                                    self._output("startHandler",determineTest(mutation.target.classList) + "Started");
+                                }
+                            });
+                        });
+                        testAreas.forEach(function(testArea){
+                            self.activationObserver.observe(testArea, observerConfig);
+                        });
+
+
+                        self._output("statusHandler","Upload stat watcher started!!!");
+                    });
                     self._acquireElement(".results-container").then(function(resultContainers){
                         // console.log("watching",resultContainers,"for the finish");
                         self._waitForFinish(resultContainers[0]).then(
