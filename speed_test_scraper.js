@@ -292,10 +292,11 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         //Handlers:
         // statusHandler - just fire off random status notes.
         if(this.platform=="andriod"){
-            // TODO spit this out to Android
+            if (window.appInterface) { //android version
+                window.appInterface[handler](messageContent);
+            }
         }
         else if(this.platform=="ios"){
-            // console.warn("ios!!!");a
             window.webkit.messageHandlers[handler].postMessage(messageContent);
         }
         else{
@@ -303,35 +304,6 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
             outputHandler(handler,messageContent);
         }
     },
-    "_outputStatus": function(resultString){
-        if(this.platform=="andriod"){
-            // TODO spit this out to Androida
-        }
-        else if(this.platform=="ios"){
-            window.webkit.messageHandlers.statusHandler.postMessage(resultString);
-        }
-        else{
-            console.log(resultString); // eslint-disable-line no-console
-        }
-        this._disconnectObservers();
-    },
-    // "_watchContentChanges": function(element,descriptor,parentElement){
-    //     // console.warn("watching for',descriptor,'speeds','in',element);
-    //     var self = this;
-    //
-    //     self._output("watching for " + descriptor + " speeds in (" + element + ")");
-    //
-    //     var observerConfig = {
-    //         characterData: true,
-    //         subtree: true
-    //     };
-    //     self.changeObserver = new MutationObserver(function(mutations){
-    //         mutations.forEach(function(mutation){
-    //             self._outputSingleStat(mutation.target.data,parentElement,descriptor);
-    //         });
-    //     });
-    //     self.changeObserver.observe(element, observerConfig);
-    // },
     "_disconnectObservers": function(){
         var self = this;
         ["changeObserver","finishObserver"].forEach(function(observer){
