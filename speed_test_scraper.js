@@ -16,7 +16,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         "firstDownloadStatTimeout": 10000,
         "firstUploadStatTimeout": 60000,
         "testTimeout": 120000,
-        "elementHuntTimeoutDefault": 3000,
+        "elementHuntTimeoutDefault": 5000,
         "elementHuntPollSpeed": 100,
         "reportUnits": false
     },
@@ -55,6 +55,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                                 reject(err);
                             }
                         );
+                    },
+                    function(error){
+                        reject(error); // acquire timed out.
                     });
                     self._acquireElement(".results-speed .result-tile-upload .result-value .number").then(function(uploadResultBlocks){
                         self._waitForChild(uploadResultBlocks[0],"span",self.config.firstUploadStatTimeout).then(
@@ -83,6 +86,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                                 reject(err);
                             }
                         );
+                    },
+                    function(error){
+                        reject(error); // acquire timed out.
                     });
                     self._acquireElement(".results-speed .result-tile").then(function(testAreas){
                         self._output("statusHandler","Watching for upload area highlight (a.k.a. download complete)");
@@ -117,6 +123,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
 
 
                         self._output("statusHandler","Upload stat watcher started!!!");
+                    },
+                    function(error){
+                        reject(error); // acquire timed out.
                     });
                     self._acquireElement(".results-container").then(function(resultContainers){
                         // console.log("watching",resultContainers,"for the finish");
@@ -130,6 +139,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                                 reject("speed test failed (timeout)!");
                             }
                         );
+                    },
+                    function(error){
+                        reject(error); // acquire timed out.
                     });
                     //watch for modals
                     self._acquireElement(".test").then(function(testAreas){
@@ -142,6 +154,9 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
                             //     //do not resolve, no need to reject.
                             // }
                         );
+                    },
+                    function(error){
+                        reject(error); // acquire timed out.
                     });
                 }
                 ,
