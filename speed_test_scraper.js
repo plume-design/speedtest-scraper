@@ -291,7 +291,7 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
     "_output": function(handler,messageContent){
         //Handlers:
         // statusHandler - just fire off random status notes.
-        if(this.platform=="andriod"){
+        if(this.platform=="android"){
             if (window.appInterface) { //android version
                 window.appInterface[handler](messageContent);
             }
