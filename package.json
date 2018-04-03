@@ -1,0 +1,23 @@
+{
+  "name": "speedtest-scraper",
+  "version": "1.0.0",
+  "description": "A way to make our native apps use a web-based speed test.",
+  "main": "speed_test_scraper.js",
+  "scripts": {
+    "test": "node selenium.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plume-design/speedtest-scraper.git"
+  },
+  "author": "Evan Rusackas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/plume-design/speedtest-scraper/issues"
+  },
+  "homepage": "https://github.com/plume-design/speedtest-scraper#readme",
+  "devDependencies": {
+    "fs": "0.0.1-security",
+    "selenium-webdriver": "^4.0.0-alpha.1"
+  }
+}

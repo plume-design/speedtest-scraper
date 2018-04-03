@@ -1,0 +1,11 @@
+brew install chromedriver
+
+npm install -g eslint
+npm install -g uglifyjs
+
+eslint speed_test_scraper.js
+
+uglifyjs speed_test_scraper.js -o speed_test_scraper.min.js
+
+TODO -
+Add babel, convert to async/await

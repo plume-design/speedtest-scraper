@@ -317,9 +317,16 @@ var ooklaTest = { // eslint-disable-line no-unused-vars
         else if(this.platform=="ios"){
             window.webkit.messageHandlers[handler].postMessage(messageContent);
         }
+        else if(this.platform=="selenium"){
+            if(messageContent !== null && typeof messageContent === "object"){
+                messageContent = JSON.stringify(messageContent);
+            }
+            var outputHandler = console.log; // eslint-disable-line no-console
+            outputHandler(handler + ": " + messageContent);
+        }
         else{
             var outputHandler = (handler === "statusHandler") ? console.debug : console.log; // eslint-disable-line no-console
-            outputHandler(handler,messageContent);
+            outputHandler(handler, messageContent);
         }
     },
     "_disconnectObservers": function(){
